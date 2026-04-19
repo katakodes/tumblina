@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "dev:safe": "next dev --webpack --disable-source-maps -H 127.0.0.1 -p 3001",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
