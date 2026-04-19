@@ -90,7 +90,7 @@ export function DraftsGrid({ drafts }: { drafts: DraftCardData[] }) {
       {visibleDrafts.map((draft) => {
         const actionState = actions[draft.id] ?? { status: "idle", message: "" };
         const isWorking = actionState.status === "working";
-        const imageUrl = draft.imageUrl ? getTumblrDisplayImageUrl(draft.imageUrl, "s400x600") : undefined;
+        const imageUrl = draft.imageUrl ? getTumblrDisplayImageUrl(draft.imageUrl) : undefined;
 
         return (
           <article key={draft.id} className="flex h-[560px] flex-col overflow-hidden rounded-md border border-ink/10 bg-white/80 shadow-sm">

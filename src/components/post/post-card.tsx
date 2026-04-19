@@ -31,7 +31,7 @@ export function PostCard({
   const [removed, setRemoved] = useState(false);
   const textPreview = post.summary || post.caption || post.title || "Text post";
   const textTitle = post.title && post.title !== textPreview ? post.title : undefined;
-  const displayImageUrl = post.imageUrl ? getTumblrDisplayImageUrl(post.imageUrl, "s400x600") : undefined;
+  const displayImageUrl = post.imageUrl ? getTumblrDisplayImageUrl(post.imageUrl) : undefined;
 
   if (removed) return null;
 
