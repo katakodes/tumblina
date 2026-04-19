@@ -29,18 +29,32 @@ export function PostCard({
   showRepostAction?: boolean;
 }) {
   const [removed, setRemoved] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const textPreview = post.summary || post.caption || post.title || "Text post";
   const textTitle = post.title && post.title !== textPreview ? post.title : undefined;
-  const displayImageUrl = post.imageUrl ? getTumblrDisplayImageUrl(post.imageUrl) : undefined;
+  const displayImageUrl = post.imageUrl && imageLoaded ? getTumblrDisplayImageUrl(post.imageUrl, "s400x600") : undefined;
 
   if (removed) return null;
 
   return (
     <article className="masonry-item flex h-[560px] flex-col overflow-hidden rounded-md border border-ink/10 bg-white/80 shadow-sm">
       <div className="relative h-[340px] w-full shrink-0 bg-bone">
-        {displayImageUrl ? (
-          // Native lazy loading keeps large Tumblr grids from fetching every image at once.
-          <img src={displayImageUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+        {post.imageUrl ? (
+          displayImageUrl ? (
+            <img src={displayImageUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full flex-col justify-center gap-4 p-7">
+              {textTitle ? <p className="text-sm font-semibold uppercase tracking-[0.14em] text-ink/42">{textTitle}</p> : null}
+              <p className="line-clamp-6 font-serif text-2xl leading-snug text-ink/82">{textPreview}</p>
+              <button
+                type="button"
+                onClick={() => setImageLoaded(true)}
+                className="w-fit rounded-md bg-ink px-3 py-2 text-xs font-medium text-paper"
+              >
+                Load image
+              </button>
+            </div>
+          )
         ) : (
           <div className="flex h-full flex-col justify-center gap-4 p-7">
             {textTitle ? <p className="text-sm font-semibold uppercase tracking-[0.14em] text-ink/42">{textTitle}</p> : null}

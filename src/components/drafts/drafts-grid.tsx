@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { ExternalLink, Pencil, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { getTumblrDisplayImageUrl } from "@/lib/media/display-url";
 
 export type DraftCardData = {
   id: string;
@@ -24,6 +24,7 @@ type DraftActionState = {
 export function DraftsGrid({ drafts }: { drafts: DraftCardData[] }) {
   const [visibleDrafts, setVisibleDrafts] = useState(drafts);
   const [actions, setActions] = useState<Record<string, DraftActionState>>({});
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
 
   async function runAction(draft: DraftCardData, action: "publish" | "delete") {
     const confirmMessage =
@@ -90,12 +91,27 @@ export function DraftsGrid({ drafts }: { drafts: DraftCardData[] }) {
       {visibleDrafts.map((draft) => {
         const actionState = actions[draft.id] ?? { status: "idle", message: "" };
         const isWorking = actionState.status === "working";
+        const imageUrl = draft.imageUrl && loadedImages[draft.id] ? getTumblrDisplayImageUrl(draft.imageUrl, "s400x600") : undefined;
 
         return (
           <article key={draft.id} className="flex h-[560px] flex-col overflow-hidden rounded-md border border-ink/10 bg-white/80 shadow-sm">
             <div className="relative h-[300px] shrink-0 bg-bone">
               {draft.imageUrl ? (
-                <Image src={draft.imageUrl} alt="" fill className="object-cover" sizes="(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 92vw" />
+                imageUrl ? (
+                  <img src={imageUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full flex-col justify-center gap-4 p-7">
+                    {draft.title ? <p className="text-sm font-semibold uppercase tracking-[0.14em] text-ink/42">{draft.title}</p> : null}
+                    <p className="line-clamp-7 font-serif text-2xl leading-snug text-ink/82">{draft.text}</p>
+                    <button
+                      type="button"
+                      onClick={() => setLoadedImages((current) => ({ ...current, [draft.id]: true }))}
+                      className="w-fit rounded-md bg-ink px-3 py-2 text-xs font-medium text-paper"
+                    >
+                      Load image
+                    </button>
+                  </div>
+                )
               ) : (
                 <div className="flex h-full flex-col justify-center gap-4 p-7">
                   {draft.title ? <p className="text-sm font-semibold uppercase tracking-[0.14em] text-ink/42">{draft.title}</p> : null}
