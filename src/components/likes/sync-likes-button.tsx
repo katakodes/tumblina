@@ -10,11 +10,11 @@ export function SyncLikesButton() {
 
   async function syncLikes() {
     setStatus("syncing");
-    setMessage("Syncing the next batch of Tumblr likes. This pulls up to 200 at a time...");
+    setMessage("Syncing the next small batch of Tumblr likes. This pulls up to 20 at a time...");
     const response = await fetch("/api/sync/likes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pages: 10, strategy: "before" })
+      body: JSON.stringify({ pages: 1, strategy: "before" })
     });
     const payload = await response.json().catch(() => ({}));
 
