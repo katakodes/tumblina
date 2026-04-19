@@ -8,6 +8,7 @@ import { getCurrentUserId } from "@/lib/session";
 import { toTagList } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+const LIKES_LOAD_LIMIT = 120;
 const INITIAL_VISIBLE_POSTS = 12;
 
 type LikesSearchParams = {
@@ -54,7 +55,7 @@ export default async function LikesPage({ searchParams }: { searchParams?: Promi
       }
     },
     orderBy: [{ likedAt: "desc" }, { createdAt: "desc" }],
-    take: 500
+    take: LIKES_LOAD_LIMIT
   });
 
   const posts = likes
@@ -110,7 +111,7 @@ export default async function LikesPage({ searchParams }: { searchParams?: Promi
         <LikesControls tags={allTags} />
         <div className="space-y-2">
           <p className="text-sm text-ink/58">Color filters use broad palette families, like green, red, blue, and brown.</p>
-          {likes.length < 500 ? (
+          {likes.length < LIKES_LOAD_LIMIT ? (
             <p className="rounded-md border border-pollen/30 bg-pollen/10 px-3 py-2 text-sm text-ink/68">
               Only {totalLocalLikes} likes are local right now. Sync more likes to make color filters representative of your full library.
             </p>
