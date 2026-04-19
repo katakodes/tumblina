@@ -1,0 +1,323 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum TumblrPostType {
+  text
+  photo
+  quote
+  link
+  chat
+  audio
+  video
+  answer
+  blocks
+  unknown
+}
+
+enum TumblrPostState {
+  published
+  queued
+  draft
+  private
+  submission
+  unknown
+}
+
+enum SyncJobType {
+  likes
+  posts
+  drafts
+  queue
+  explore
+  colors
+}
+
+enum SyncJobStatus {
+  queued
+  running
+  succeeded
+  failed
+  partial
+}
+
+enum CaptureStatus {
+  inbox
+  saved
+  drafted
+  queued
+  published
+  archived
+}
+
+enum PublishAction {
+  save_only
+  draft
+  queue
+  publish
+}
+
+model User {
+  id                  String                 @id @default(cuid())
+  email               String?                @unique
+  name                String?
+  image               String?
+  defaultPublishAction PublishAction          @default(draft)
+  syncFrequencyMinutes Int                    @default(360)
+  appearance          String                 @default("system")
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  accounts            TumblrAccount[]
+  collections         Collection[]
+  labels              Label[]
+  savedFilters        SavedFilter[]
+  syncJobs            SyncJob[]
+  captures            Capture[]
+  previewItems        PreviewItem[]
+  likes               Like[]
+}
+
+model TumblrAccount {
+  id                   String   @id @default(cuid())
+  userId               String
+  tumblrUserId         String?
+  name                 String?
+  accessTokenEncrypted String?
+  refreshTokenEncrypted String?
+  oauthTokenEncrypted  String?
+  oauthSecretEncrypted String?
+  tokenType            String?
+  scope                String?
+  expiresAt            DateTime?
+  rawUser              Json?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blogs                Blog[]
+
+  @@index([userId])
+}
+
+model Blog {
+  id                    String   @id @default(cuid())
+  accountId             String
+  tumblrUuid            String?
+  name                  String
+  title                 String?
+  url                   String?
+  avatarUrl             String?
+  isPrimary             Boolean  @default(false)
+  canPost               Boolean  @default(false)
+  selectedForSync       Boolean  @default(true)
+  rawBlog               Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  account               TumblrAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  posts                 Post[]
+
+  @@unique([accountId, name])
+  @@index([name])
+}
+
+model Post {
+  id                   String   @id @default(cuid())
+  tumblrId             String
+  blogId               String?
+  blogName             String
+  postUrl              String?
+  shortUrl             String?
+  sourceUrl            String?
+  sourceTitle          String?
+  reblogKey            String?
+  type                 TumblrPostType @default(unknown)
+  state                TumblrPostState @default(unknown)
+  title                String?
+  captionText          String?
+  summary              String?
+  tags                 Json     @default("[]")
+  timestamp            DateTime?
+  likedAt              DateTime?
+  importedFrom         String   @default("tumblr")
+  npf                  Json?
+  legacy               Json?
+  dominantColorHex     String?
+  dominantColorName    String?
+  paletteHexes         Json     @default("[]")
+  paletteNames         Json     @default("[]")
+  paletteSwatches      Json     @default("[]")
+  brightnessScore      Float?
+  saturationScore      Float?
+  hidden               Boolean  @default(false)
+  pinned               Boolean  @default(false)
+  reference            Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  blog                 Blog?    @relation(fields: [blogId], references: [id], onDelete: SetNull)
+  media                MediaAsset[]
+  likes                Like[]
+  collectionItems      CollectionItem[]
+  labelLinks           PostLabel[]
+
+  @@unique([tumblrId, blogName])
+  @@index([blogName])
+  @@index([type])
+  @@index([state])
+  @@index([timestamp])
+  @@index([dominantColorName])
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  likedAt   DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([likedAt])
+}
+
+model MediaAsset {
+  id               String   @id @default(cuid())
+  postId           String?
+  captureId        String?
+  url              String
+  tumblrUrl        String?
+  mimeType         String?
+  width            Int?
+  height           Int?
+  altText          String?
+  dominantColorHex String?
+  dominantColorName String?
+  paletteHexes     Json     @default("[]")
+  paletteNames     Json     @default("[]")
+  paletteSwatches  Json     @default("[]")
+  brightnessScore  Float?
+  saturationScore  Float?
+  createdAt        DateTime @default(now())
+  post             Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  capture          Capture? @relation(fields: [captureId], references: [id], onDelete: Cascade)
+
+  @@index([dominantColorName])
+}
+
+model Collection {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  coverUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       CollectionItem[]
+
+  @@unique([userId, name])
+}
+
+model CollectionItem {
+  id           String   @id @default(cuid())
+  collectionId String
+  postId       String?
+  captureId    String?
+  note         String?
+  createdAt    DateTime @default(now())
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  post         Post?      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  capture      Capture?   @relation(fields: [captureId], references: [id], onDelete: Cascade)
+
+  @@index([collectionId])
+}
+
+model Label {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  color     String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  posts     PostLabel[]
+
+  @@unique([userId, name])
+}
+
+model PostLabel {
+  id      String @id @default(cuid())
+  postId  String
+  labelId String
+  post    Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  label   Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, labelId])
+}
+
+model SavedFilter {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  scope     String
+  query     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([scope])
+}
+
+model SyncJob {
+  id             String        @id @default(cuid())
+  userId         String?
+  type           SyncJobType
+  status         SyncJobStatus @default(queued)
+  cursor         String?
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  attemptedCount Int           @default(0)
+  importedCount  Int           @default(0)
+  error          String?
+  logs           Json          @default("[]")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model Capture {
+  id                  String        @id @default(cuid())
+  userId              String?
+  status              CaptureStatus @default(inbox)
+  sourcePageUrl       String
+  sourcePageTitle     String?
+  selectedImageUrl    String?
+  selectedText        String?
+  altText             String?
+  caption             String?
+  tags                Json          @default("[]")
+  defaultPublishAction PublishAction @default(draft)
+  destinationBlogName String?
+  colorAnalyzedAt     DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  user                User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  media               MediaAsset[]
+  collectionItems     CollectionItem[]
+}
+
+model PreviewItem {
+  id          String   @id @default(cuid())
+  userId      String?
+  title       String?
+  caption     String?
+  tags        Json     @default("[]")
+  content     Json
+  source      String   @default("manual")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
