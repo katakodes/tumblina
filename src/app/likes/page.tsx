@@ -9,7 +9,7 @@ import { toTagList } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 const LIKES_LOAD_LIMIT = 120;
-const INITIAL_VISIBLE_POSTS = 12;
+const INITIAL_VISIBLE_POSTS = 16;
 
 type LikesSearchParams = {
   q?: string;

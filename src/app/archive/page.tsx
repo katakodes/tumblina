@@ -7,7 +7,7 @@ import { getCurrentTumblrAccount } from "@/lib/session";
 import { toTagList } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-const INITIAL_VISIBLE_POSTS = 12;
+const INITIAL_VISIBLE_POSTS = 16;
 
 type ArchiveSearchParams = {
   blog?: string;

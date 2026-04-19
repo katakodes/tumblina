@@ -5,8 +5,14 @@ import { TumblrClient } from "@/lib/tumblr/client";
 import { upsertTumblrPost } from "@/lib/sync/import-posts";
 
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({})) as { pages?: number; reset?: boolean; strategy?: "offset" | "before" };
+  const body = await request.json().catch(() => ({})) as {
+    pages?: number;
+    pageSize?: number;
+    reset?: boolean;
+    strategy?: "offset" | "before";
+  };
   const pages = Math.max(1, Math.min(Number(body.pages ?? 3), 10));
+  const pageSize = Math.max(1, Math.min(Number(body.pageSize ?? 16), 16));
   const cookieStore = await cookies();
   const userId = cookieStore.get("tumblr_studio_user_id")?.value;
 
@@ -66,8 +72,8 @@ export async function POST(request: Request) {
     for (let page = 0; page < pages; page += 1) {
       const response =
         strategy === "offset"
-          ? await client.getUserLikes({ offset, limit: 20 })
-          : await client.getUserLikes({ before, limit: 20 });
+          ? await client.getUserLikes({ offset, limit: pageSize })
+          : await client.getUserLikes({ before, limit: pageSize });
       total = response.liked_count;
       console.info("[likes-sync] fetched page", {
         page: page + 1,
@@ -123,6 +129,7 @@ export async function POST(request: Request) {
       total,
       localTotal,
       pages,
+      pageSize,
       strategy,
       startedAtOffset,
       nextOffset: offset,

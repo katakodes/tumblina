@@ -24,7 +24,6 @@ type DraftActionState = {
 export function DraftsGrid({ drafts }: { drafts: DraftCardData[] }) {
   const [visibleDrafts, setVisibleDrafts] = useState(drafts);
   const [actions, setActions] = useState<Record<string, DraftActionState>>({});
-  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
 
   async function runAction(draft: DraftCardData, action: "publish" | "delete") {
     const confirmMessage =
@@ -91,27 +90,13 @@ export function DraftsGrid({ drafts }: { drafts: DraftCardData[] }) {
       {visibleDrafts.map((draft) => {
         const actionState = actions[draft.id] ?? { status: "idle", message: "" };
         const isWorking = actionState.status === "working";
-        const imageUrl = draft.imageUrl && loadedImages[draft.id] ? getTumblrDisplayImageUrl(draft.imageUrl, "s400x600") : undefined;
+        const imageUrl = draft.imageUrl ? getTumblrDisplayImageUrl(draft.imageUrl, "s400x600") : undefined;
 
         return (
           <article key={draft.id} className="flex h-[560px] flex-col overflow-hidden rounded-md border border-ink/10 bg-white/80 shadow-sm">
             <div className="relative h-[300px] shrink-0 bg-bone">
-              {draft.imageUrl ? (
-                imageUrl ? (
-                  <img src={imageUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full flex-col justify-center gap-4 p-7">
-                    {draft.title ? <p className="text-sm font-semibold uppercase tracking-[0.14em] text-ink/42">{draft.title}</p> : null}
-                    <p className="line-clamp-7 font-serif text-2xl leading-snug text-ink/82">{draft.text}</p>
-                    <button
-                      type="button"
-                      onClick={() => setLoadedImages((current) => ({ ...current, [draft.id]: true }))}
-                      className="w-fit rounded-md bg-ink px-3 py-2 text-xs font-medium text-paper"
-                    >
-                      Load image
-                    </button>
-                  </div>
-                )
+              {imageUrl ? (
+                <img src={imageUrl} alt="" loading="eager" decoding="async" className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full flex-col justify-center gap-4 p-7">
                   {draft.title ? <p className="text-sm font-semibold uppercase tracking-[0.14em] text-ink/42">{draft.title}</p> : null}
@@ -124,7 +109,6 @@ export function DraftsGrid({ drafts }: { drafts: DraftCardData[] }) {
                 <p className="truncate text-sm font-semibold">@{draft.blogName}</p>
                 <span className="rounded-md bg-bone px-2 py-1 text-xs text-ink/62">{draft.type}</span>
               </div>
-              <p className="line-clamp-3 min-h-[72px] text-sm leading-6 text-ink/72">{draft.text}</p>
               <div className="flex min-h-[28px] flex-wrap gap-1.5 overflow-hidden">
                 {draft.tags.slice(0, 4).map((tag) => (
                   <span key={tag} className="rounded-md bg-ink/5 px-2 py-1 text-xs text-ink/62">
